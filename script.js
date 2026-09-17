@@ -1,1074 +1,931 @@
 
-// =====================================================
-// EMPLOYEE MANAGEMENT SYSTEM
-// =====================================================
+// =========================================
+// EMPLOYEE ARRAY
+// =========================================
 
-
-// API URL
-const API_URL = "https://dummyjson.com/users";
-
-
-// Main employee array
 let employees = [];
 
+let displayedEmployees = [];
 
-// Current department
 let selectedDepartment = "All";
 
 
-// Current search text
-let searchText = "";
+// =========================================
+// DATE AND TIME
+// =========================================
+
+function updateDateTime() {
+
+    const now = new Date();
+
+    const day = now.getDate();
+
+    const month = now.toLocaleString("en-IN", {
+        month: "long"
+    });
+
+    const year = now.getFullYear();
+
+    let hours = now.getHours();
+
+    const minutes = String(
+        now.getMinutes()
+    ).padStart(2, "0");
+
+    const seconds = String(
+        now.getSeconds()
+    ).padStart(2, "0");
+
+    const ampm = hours >= 12 ? "PM" : "AM";
+
+    hours = hours % 12 || 12;
+
+    document.getElementById("date").textContent =
+        `Today: ${day} ${month} ${year}`;
+
+    document.getElementById("time").textContent =
+        `Time: ${hours}:${minutes}:${seconds} ${ampm}`;
+}
+
+updateDateTime();
+
+setInterval(updateDateTime, 1000);
 
 
-// =====================================================
-// DOM ELEMENTS
-// =====================================================
-
-const employeeContainer =
-    document.getElementById("employeeContainer");
-
-const employeeCount =
-    document.getElementById("employeeCount");
-
-const totalSalary =
-    document.getElementById("totalSalary");
-
-const averageSalary =
-    document.getElementById("averageSalary");
-
-const highestPaid =
-    document.getElementById("highestPaid");
-
-const searchInput =
-    document.getElementById("searchInput");
-
-const searchBtn =
-    document.getElementById("searchBtn");
-
-const employeeForm =
-    document.getElementById("employeeForm");
-
-const statusMessage =
-    document.getElementById("statusMessage");
-
-const sortSelect =
-    document.getElementById("sortSelect");
-
-
-// =====================================================
-// FETCH EMPLOYEES
-// =====================================================
+// =========================================
+// FETCH EMPLOYEES FROM API
+// =========================================
 
 function fetchEmployees() {
 
-    statusMessage.innerHTML = "Loading employees...";
+    showMessage("Loading employees...");
 
-
-    fetch(API_URL)
+    fetch("https://dummyjson.com/users")
 
         .then(response => {
 
             if (!response.ok) {
-                throw new Error("API request failed");
+                throw new Error("API Error");
             }
 
             return response.json();
         })
 
-
         .then(data => {
 
-            console.log("API data:", data);
+            const apiEmployees = data.users.map(
+                (user, index) => {
 
+                    return {
 
-            // Store users in array
+                        id: user.id,
 
-            employees = data.users.map(user => {
+                        name:
+                            `${user.firstName} ${user.lastName}`,
 
-                // Destructuring
+                        age:
+                            user.age,
 
-                const {
-                    id,
-                    firstName,
-                    lastName,
-                    age,
-                    email,
-                    phone,
-                    image,
-                    company
-                } = user;
+                        email:
+                            user.email,
 
+                        phone:
+                            user.phone,
 
-                // Convert API department
+                        image:
+                            user.image,
 
-                let department =
-                    getDepartment(company.department);
+                        // IT, HR, Finance, Marketing
+                        department:
+                            getDepartment(index),
 
+                        // Salary
+                        salary:
+                            getSalary(index)
+                    };
+                }
+            );
 
-                // Create employee object
+            employees = apiEmployees;
 
-                return {
+            displayedEmployees = [...employees];
 
-                    id: id,
+            displayEmployees(displayedEmployees);
 
-                    name: `${firstName} ${lastName}`,
-
-                    age: age,
-
-                    email: email,
-
-                    phone: phone,
-
-                    image: image,
-
-                    department: department,
-
-
-                    // Salary added locally
-                    // Different salary for each employee
-
-                    salary:
-                        Math.floor(
-                            Math.random() * 70001
-                        ) + 30000
-
-                };
-
-            });
-
-
-            displayEmployees(employees);
-
-
-            statusMessage.innerHTML =
-                "Employee data loaded successfully.";
-
+            showMessage(
+                "Employee data loaded successfully."
+            );
         })
-
 
         .catch(error => {
 
-            console.error(error);
+            console.log(error);
 
-            statusMessage.innerHTML =
-                "Unable to load employee data. Please try again.";
-
+            showMessage(
+                "Unable to load employee data. Please try again."
+            );
         })
-
 
         .finally(() => {
 
             console.log(
-                "API request completed."
+                "API loading completed."
             );
-
         });
-
 }
 
 
-// =====================================================
-// DEPARTMENT CONVERTER
-// =====================================================
+// =========================================
+// DEPARTMENT ASSIGNMENT
+// =========================================
 
-function getDepartment(apiDepartment) {
+function getDepartment(index) {
 
-    const department =
-        apiDepartment.toLowerCase();
+    const departments = [
+        "IT",
+        "HR",
+        "Finance",
+        "Marketing"
+    ];
 
-
-    if (department.includes("marketing")) {
-
-        return "Marketing";
-
-    }
-
-
-    if (
-        department.includes("human") ||
-        department.includes("hr")
-    ) {
-
-        return "HR";
-
-    }
-
-
-    if (
-        department.includes("finance") ||
-        department.includes("account")
-    ) {
-
-        return "Finance";
-
-    }
-
-
-    if (
-        department.includes("engineering") ||
-        department.includes("development") ||
-        department.includes("technology")
-    ) {
-
-        return "IT";
-
-    }
-
-
-    return "IT";
+    return departments[
+        index % departments.length
+    ];
 }
 
 
-// =====================================================
+// =========================================
+// SALARY ASSIGNMENT
+// =========================================
+
+function getSalary(index) {
+
+    const salaries = [
+        45000,
+        50000,
+        55000,
+        60000,
+        65000,
+        70000,
+        75000,
+        80000,
+        85000,
+        90000
+    ];
+
+    return salaries[
+        index % salaries.length
+    ];
+}
+
+
+// =========================================
 // DISPLAY EMPLOYEES
-// =====================================================
+// =========================================
 
 function displayEmployees(employeeList) {
 
-    employeeContainer.innerHTML = "";
+    const container =
+        document.getElementById(
+            "employeeContainer"
+        );
 
+    container.innerHTML = "";
+
+    displayedEmployees = employeeList;
+
+    if (employeeList.length === 0) {
+
+        const empty =
+            document.createElement("div");
+
+        empty.className = "empty";
+
+        empty.innerHTML =
+            "<h3>No employees found</h3>";
+
+        container.appendChild(empty);
+
+        updateDashboard([]);
+
+        return;
+    }
 
     employeeList.forEach(employee => {
 
-        createEmployeeCard(employee);
+        const card =
+            document.createElement("div");
 
+        card.className =
+            "employee-card";
+
+        // IMAGE
+        const image =
+            document.createElement("img");
+
+        image.setAttribute(
+            "src",
+            employee.image ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}`
+        );
+
+        image.setAttribute(
+            "alt",
+            employee.name
+        );
+
+        // NAME
+        const name =
+            document.createElement("h3");
+
+        name.textContent =
+            employee.name;
+
+        // DETAILS
+        const details =
+            document.createElement("div");
+
+        details.innerHTML = `
+
+            <p>
+                <strong>Age:</strong>
+                ${employee.age}
+            </p>
+
+            <p>
+                <strong>Email:</strong>
+                ${employee.email}
+            </p>
+
+            <p>
+                <strong>Department:</strong>
+                ${employee.department}
+            </p>
+
+            <p>
+                <strong>Phone:</strong>
+                ${employee.phone}
+            </p>
+
+            <p>
+                <strong>Salary:</strong>
+                ₹${Number(employee.salary).toLocaleString("en-IN")}
+            </p>
+
+        `;
+
+        // DELETE BUTTON
+        const deleteButton =
+            document.createElement("button");
+
+        deleteButton.textContent =
+            "Delete";
+
+        deleteButton.className =
+            "delete-btn";
+
+        deleteButton.addEventListener(
+            "click",
+            function() {
+
+                deleteEmployee(
+                    employee.id
+                );
+            }
+        );
+
+        card.appendChild(image);
+
+        card.appendChild(name);
+
+        card.appendChild(details);
+
+        card.appendChild(deleteButton);
+
+        container.appendChild(card);
     });
 
-
-    updateEmployeeCount(employeeList);
-
-    calculateSalary(employeeList);
-
+    updateDashboard(employeeList);
 }
 
 
-// =====================================================
-// CREATE EMPLOYEE CARD
-// =====================================================
-
-function createEmployeeCard(employee) {
-
-    const card =
-        document.createElement("div");
-
-
-    card.className =
-        "employee-card";
-
-
-    // setAttribute()
-
-    card.setAttribute(
-        "data-id",
-        employee.id
-    );
-
-
-    // Salary display
-
-    const salaryText =
-        `₹${employee.salary.toLocaleString("en-IN")}`;
-
-
-    card.innerHTML = `
-
-        <img
-            src="${employee.image || "https://via.placeholder.com/100"}"
-            alt="${employee.name}"
-        >
-
-        <h3>${employee.name}</h3>
-
-        <p>
-            <strong>Age:</strong>
-            ${employee.age}
-        </p>
-
-        <p>
-            <strong>Email:</strong>
-            ${employee.email}
-        </p>
-
-        <p>
-            <strong>Phone:</strong>
-            ${employee.phone || "Not Available"}
-        </p>
-
-        <p class="department">
-            <strong>Department:</strong>
-            ${employee.department}
-        </p>
-
-        <p>
-            <strong>Salary:</strong>
-            ${salaryText}
-        </p>
-
-        <button
-            class="delete-btn"
-            onclick="deleteEmployee(${employee.id})"
-        >
-            Delete
-        </button>
-
-    `;
-
-
-    employeeContainer.appendChild(card);
-
-}
-
-
-// =====================================================
+// =========================================
 // SEARCH EMPLOYEES
-// =====================================================
+// =========================================
 
 function searchEmployees() {
 
-    searchText =
-        searchInput.value
-            .trim()
-            .toLowerCase();
+    const searchText =
+        document
+            .getElementById("searchInput")
+            .value
+            .toLowerCase()
+            .trim();
 
+    let result =
+        employees.filter(employee =>
+            employee.name
+                .toLowerCase()
+                .includes(searchText)
+        );
 
-    applyFilters();
+    if (selectedDepartment !== "All") {
 
-}
-
-
-// =====================================================
-// APPLY SEARCH + DEPARTMENT FILTER
-// =====================================================
-
-function applyFilters() {
-
-    let filteredEmployees =
-        employees.filter(employee => {
-
-            const matchesName =
-                employee.name
+        result =
+            result.filter(employee =>
+                employee.department
                     .toLowerCase()
-                    .includes(searchText);
+                    ===
+                selectedDepartment.toLowerCase()
+            );
+    }
 
-
-            const matchesDepartment =
-                selectedDepartment === "All" ||
-                employee.department === selectedDepartment;
-
-
-            return matchesName &&
-                   matchesDepartment;
-
-        });
-
-
-    displayEmployees(filteredEmployees);
-
+    displayEmployees(result);
 }
 
 
-// =====================================================
+// SEARCH BUTTON
+
+document
+    .getElementById("searchBtn")
+    .addEventListener(
+        "click",
+        searchEmployees
+    );
+
+
+// LIVE SEARCH
+
+document
+    .getElementById("searchInput")
+    .addEventListener(
+        "input",
+        searchEmployees
+    );
+
+
+// =========================================
 // DEPARTMENT FILTER
-// =====================================================
+// =========================================
 
 function filterDepartment(department) {
 
     selectedDepartment =
         department;
 
-
-    document
-        .querySelectorAll(".department-btn")
-        .forEach(button => {
-
-            button.classList.remove("active");
-
-        });
-
-
-    const selectedButton =
-        document.querySelector(
-            `[data-department="${department}"]`
-        );
-
-
-    if (selectedButton) {
-
-        selectedButton.classList.add("active");
-
-    }
-
-
-    applyFilters();
-
-}
-
-
-// =====================================================
-// UPDATE EMPLOYEE COUNT
-// =====================================================
-
-function updateEmployeeCount(employeeList) {
-
-    employeeCount.innerHTML =
-        employeeList.length;
-
-}
-
-
-// =====================================================
-// CALCULATE SALARY
-// =====================================================
-
-function calculateSalary(employeeList) {
-
-
-    // ==========================================
-    // TOTAL SALARY
-    // ==========================================
-
-    const total =
-        employeeList.reduce(
-            (sum, employee) => {
-
-                return sum + employee.salary;
-
-            },
-            0
-        );
-
-
-    totalSalary.innerHTML =
-        `₹${total.toLocaleString("en-IN")}`;
-
-
-    // ==========================================
-    // AVERAGE SALARY
-    // ==========================================
-
-    const average =
-        employeeList.length > 0
-            ? total / employeeList.length
-            : 0;
-
-
-    averageSalary.innerHTML =
-        `₹${Math.round(average).toLocaleString("en-IN")}`;
-
-
-    // ==========================================
-    // HIGHEST PAID EMPLOYEE
-    // ==========================================
-
-    if (employeeList.length === 0) {
-
-        highestPaid.innerHTML =
-            "None";
-
-        return;
-
-    }
-
-
-    const highest =
-        employeeList.reduce(
-            (highestEmployee, employee) => {
-
-                return employee.salary >
-                    highestEmployee.salary
-                    ? employee
-                    : highestEmployee;
-
-            }
-        );
-
-
-    highestPaid.innerHTML =
-        `${highest.name} - ₹${highest.salary.toLocaleString("en-IN")}`;
-
-}
-
-
-// =====================================================
-// VALIDATE EMPLOYEE
-// =====================================================
-
-function validateEmployee() {
-
-    let isValid = true;
-
-
-    const name =
-        document.getElementById("name")
+    const searchText =
+        document
+            .getElementById("searchInput")
             .value
+            .toLowerCase()
             .trim();
 
-
-    const age =
-        Number(
-            document.getElementById("age")
-                .value
-        );
-
-
-    const email =
-        document.getElementById("email")
-            .value
-            .trim();
-
-
-    const department =
-        document.getElementById("department")
-            .value;
-
-
-    // Clear old errors
-
-    document.getElementById("nameError")
-        .innerHTML = "";
-
-    document.getElementById("ageError")
-        .innerHTML = "";
-
-    document.getElementById("emailError")
-        .innerHTML = "";
-
-    document.getElementById("departmentError")
-        .innerHTML = "";
-
-
-    // Name validation
-
-    if (name === "") {
-
-        document.getElementById("nameError")
-            .innerHTML =
-            "❌ Please enter employee name";
-
-        isValid = false;
-
-    }
-
-
-    // Age validation
-
-    if (age <= 18 || isNaN(age)) {
-
-        document.getElementById("ageError")
-            .innerHTML =
-            "❌ Age must be greater than 18";
-
-        isValid = false;
-
-    }
-
-
-    // Email validation
-
-    if (email === "") {
-
-        document.getElementById("emailError")
-            .innerHTML =
-            "❌ Please enter employee email";
-
-        isValid = false;
-
-    }
-
-
-    // Department validation
-
-    if (department === "") {
-
-        document.getElementById("departmentError")
-            .innerHTML =
-            "❌ Please select department";
-
-        isValid = false;
-
-    }
-
-
-    return isValid;
-
-}
-
-
-// =====================================================
-// ADD EMPLOYEE
-// =====================================================
-
-function addEmployee(event) {
-
-    event.preventDefault();
-
-
-    // Validate
-
-    if (!validateEmployee()) {
-
-        return;
-
-    }
-
-
-    const name =
-        document.getElementById("name")
-            .value
-            .trim();
-
-
-    const age =
-        Number(
-            document.getElementById("age")
-                .value
-        );
-
-
-    const email =
-        document.getElementById("email")
-            .value
-            .trim();
-
-
-    const department =
-        document.getElementById("department")
-            .value;
-
-
-    // Create employee object
-
-    const newEmployee = {
-
-        id: Date.now(),
-
-        name: name,
-
-        age: age,
-
-        email: email,
-
-        department: department,
-
-        phone: "Not Available",
-
-        image: "https://via.placeholder.com/100",
-
-
-        // Salary for newly added employee
-
-        salary: 50000
-
-    };
-
-
-    // Spread operator
-
-    employees = [
-
-        ...employees,
-
-        newEmployee
-
-    ];
-
-
-    console.log(
-        "New employee:",
-        newEmployee
-    );
-
-
-    // Display updated employees
-
-    applyFilters();
-
-
-    // Clear form
-
-    clearForm();
-
-
-    statusMessage.innerHTML =
-        "Employee added successfully.";
-
-}
-
-
-// =====================================================
-// DELETE EMPLOYEE
-// =====================================================
-
-function deleteEmployee(id) {
-
-    const employee =
-        employees.find(
-            employee => employee.id === id
-        );
-
-
-    if (!employee) {
-
-        return;
-
-    }
-
-
-    const confirmDelete =
-        confirm(
-            `Delete ${employee.name}?`
-        );
-
-
-    if (!confirmDelete) {
-
-        return;
-
-    }
-
-
-    employees =
-        employees.filter(
-            employee => employee.id !== id
-        );
-
-
-    applyFilters();
-
-
-    statusMessage.innerHTML =
-        "Employee deleted successfully.";
-
-}
-
-
-// =====================================================
-// CLEAR FORM
-// =====================================================
-
-function clearForm() {
-
-    employeeForm.reset();
-
-
-    document.getElementById("nameError")
-        .innerHTML = "";
-
-    document.getElementById("ageError")
-        .innerHTML = "";
-
-    document.getElementById("emailError")
-        .innerHTML = "";
-
-    document.getElementById("departmentError")
-        .innerHTML = "";
-
-}
-
-
-// =====================================================
-// SORT EMPLOYEES
-// =====================================================
-
-function sortEmployees() {
-
-    const sortType =
-        sortSelect.value;
-
-
-    let sortedEmployees =
-        [...employees];
-
-
-    if (sortType === "nameAsc") {
-
-        sortedEmployees.sort(
-            (a, b) =>
-                a.name.localeCompare(b.name)
-        );
-
-    }
-
-
-    else if (sortType === "nameDesc") {
-
-        sortedEmployees.sort(
-            (a, b) =>
-                b.name.localeCompare(a.name)
-        );
-
-    }
-
-
-    else if (sortType === "ageAsc") {
-
-        sortedEmployees.sort(
-            (a, b) =>
-                a.age - b.age
-        );
-
-    }
-
-
-    else if (sortType === "ageDesc") {
-
-        sortedEmployees.sort(
-            (a, b) =>
-                b.age - a.age
-        );
-
-    }
-
-
-    else if (sortType === "salaryAsc") {
-
-        sortedEmployees.sort(
-            (a, b) =>
-                a.salary - b.salary
-        );
-
-    }
-
-
-    else if (sortType === "salaryDesc") {
-
-        sortedEmployees.sort(
-            (a, b) =>
-                b.salary - a.salary
-        );
-
-    }
-
-
-    const filtered =
-        sortedEmployees.filter(employee => {
-
-            const matchesName =
+    let result =
+        employees.filter(employee => {
+
+            const departmentMatch =
+                department === "All" ||
+                employee.department
+                    .toLowerCase()
+                    ===
+                department.toLowerCase();
+
+            const searchMatch =
                 employee.name
                     .toLowerCase()
                     .includes(searchText);
 
-
-            const matchesDepartment =
-                selectedDepartment === "All" ||
-                employee.department === selectedDepartment;
-
-
-            return matchesName &&
-                   matchesDepartment;
-
+            return (
+                departmentMatch &&
+                searchMatch
+            );
         });
 
-
-    displayEmployees(filtered);
-
+    displayEmployees(result);
 }
 
 
-// =====================================================
-// DATE & TIME
-// =====================================================
-
-function updateDateTime() {
-
-    const now =
-        new Date();
-
-
-    const day =
-        now.getDate();
-
-
-    const month =
-        now.toLocaleString(
-            "en-IN",
-            {
-                month: "long"
-            }
-        );
-
-
-    const year =
-        now.getFullYear();
-
-
-    let hours =
-        now.getHours();
-
-
-    const minutes =
-        now.getMinutes()
-            .toString()
-            .padStart(2, "0");
-
-
-    const seconds =
-        now.getSeconds()
-            .toString()
-            .padStart(2, "0");
-
-
-    const ampm =
-        hours >= 12
-            ? "PM"
-            : "AM";
-
-
-    hours =
-        hours % 12 || 12;
-
-
-    const formattedDate =
-        `Today: ${day} ${month} ${year}`;
-
-
-    const formattedTime =
-        `Time: ${hours}:${minutes}:${seconds} ${ampm}`;
-
-
-    document.getElementById("today")
-        .innerHTML =
-        formattedDate;
-
-
-    document.getElementById("currentTime")
-        .innerHTML =
-        formattedTime;
-
-}
-
-
-// =====================================================
-// EVENT LISTENERS
-// =====================================================
-
-
-// Search button
-
-searchBtn.addEventListener(
-    "click",
-    searchEmployees
-);
-
-
-// Search while typing
-
-searchInput.addEventListener(
-    "input",
-    searchEmployees
-);
-
-
-// Add employee form
-
-employeeForm.addEventListener(
-    "submit",
-    addEmployee
-);
-
-
-// Sort employees
-
-sortSelect.addEventListener(
-    "change",
-    sortEmployees
-);
-
-
-// Department buttons
+// =========================================
+// ADD EMPLOYEE
+// =========================================
 
 document
-    .querySelectorAll(".department-btn")
-    .forEach(button => {
+    .getElementById("employeeForm")
+    .addEventListener(
+        "submit",
+        function(event) {
 
-        button.addEventListener(
-            "click",
-            () => {
+            event.preventDefault();
 
-                const department =
-                    button.getAttribute(
-                        "data-department"
-                    );
-
-
-                filterDepartment(
-                    department
-                );
-
-            }
-        );
-
-    });
-
-
-// =====================================================
-// SOME() AND EVERY()
-// =====================================================
-
-function checkEmployeeData() {
-
-
-    // some()
-
-    const hasYoungEmployee =
-        employees.some(
-            employee =>
-                employee.age < 18
-        );
-
-
-    console.log(
-        "Is there an employee below 18?",
-        hasYoungEmployee
+            addEmployee();
+        }
     );
 
 
-    // every()
+function addEmployee() {
 
-    const allValidEmployees =
-        employees.every(
-            employee =>
-                employee.name !== "" &&
-                employee.age > 0
+    const name =
+        document
+            .getElementById("name")
+            .value
+            .trim();
+
+    const age =
+        Number(
+            document
+                .getElementById("age")
+                .value
+        );
+
+    const email =
+        document
+            .getElementById("email")
+            .value
+            .trim();
+
+    const department =
+        document
+            .getElementById("department")
+            .value;
+
+    const salary =
+        Number(
+            document
+                .getElementById("salary")
+                .value
         );
 
 
-    console.log(
-        "Is employee data valid?",
-        allValidEmployees
+    // VALIDATION
+
+    const validation =
+        validateEmployee(
+            name,
+            age,
+            email,
+            department,
+            salary
+        );
+
+    if (!validation.valid) {
+
+        document
+            .getElementById("errorMessage")
+            .textContent =
+                validation.message;
+
+        return;
+    }
+
+
+    // CREATE NEW EMPLOYEE
+
+    const newEmployee = {
+
+        id:
+            Date.now(),
+
+        name:
+            name,
+
+        age:
+            age,
+
+        email:
+            email,
+
+        department:
+            department,
+
+        phone:
+            "Not available",
+
+        salary:
+            salary,
+
+        image:
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`
+    };
+
+
+    // ADD EMPLOYEE USING SPREAD
+
+    employees = [
+        ...employees,
+        newEmployee
+    ];
+
+
+    selectedDepartment =
+        "All";
+
+
+    document
+        .getElementById("searchInput")
+        .value = "";
+
+
+    // DISPLAY
+
+    displayEmployees(
+        employees
     );
 
+
+    // CLEAR FORM
+
+    clearForm();
+
+
+    document
+        .getElementById("errorMessage")
+        .textContent = "";
+
+
+    showMessage(
+        "Employee added successfully."
+    );
 }
 
 
-// =====================================================
-// SET TIMEOUT
-// =====================================================
+// =========================================
+// VALIDATION
+// =========================================
 
-setTimeout(() => {
+function validateEmployee(
+    name,
+    age,
+    email,
+    department,
+    salary
+) {
 
-    console.log(
-        "Employee dashboard is ready."
+    if (name === "") {
+
+        return {
+            valid: false,
+            message:
+                "❌ Please enter employee name"
+        };
+    }
+
+
+    if (age <= 18 || isNaN(age)) {
+
+        return {
+            valid: false,
+            message:
+                "❌ Age must be greater than 18"
+        };
+    }
+
+
+    if (email === "") {
+
+        return {
+            valid: false,
+            message:
+                "❌ Please enter employee email"
+        };
+    }
+
+
+    if (!email.includes("@")) {
+
+        return {
+            valid: false,
+            message:
+                "❌ Please enter a valid email"
+        };
+    }
+
+
+    if (department === "") {
+
+        return {
+            valid: false,
+            message:
+                "❌ Please select a department"
+        };
+    }
+
+
+    if (salary <= 0 || isNaN(salary)) {
+
+        return {
+            valid: false,
+            message:
+                "❌ Please enter a valid salary"
+        };
+    }
+
+
+    return {
+        valid: true,
+        message: ""
+    };
+}
+
+
+// =========================================
+// DELETE EMPLOYEE
+// =========================================
+
+function deleteEmployee(id) {
+
+    employees =
+        employees.filter(
+            employee =>
+                employee.id !== id
+        );
+
+
+    let result =
+        [...employees];
+
+
+    if (selectedDepartment !== "All") {
+
+        result =
+            result.filter(
+                employee =>
+                    employee.department
+                        .toLowerCase()
+                        ===
+                    selectedDepartment
+                        .toLowerCase()
+            );
+    }
+
+
+    const searchText =
+        document
+            .getElementById("searchInput")
+            .value
+            .toLowerCase()
+            .trim();
+
+
+    if (searchText !== "") {
+
+        result =
+            result.filter(
+                employee =>
+                    employee.name
+                        .toLowerCase()
+                        .includes(searchText)
+            );
+    }
+
+
+    displayEmployees(result);
+
+
+    showMessage(
+        "Employee deleted successfully."
     );
+}
 
-}, 1000);
+
+// =========================================
+// SALARY CALCULATION
+// =========================================
+
+function calculateSalary(employeeList) {
+
+    const totalSalary =
+        employeeList.reduce(
+            (
+                total,
+                employee
+            ) =>
+                total +
+                Number(employee.salary),
+            0
+        );
 
 
-// =====================================================
+    const averageSalary =
+        employeeList.length > 0
+            ? totalSalary /
+              employeeList.length
+            : 0;
+
+
+    const highestEmployee =
+        employeeList.length > 0
+            ? employeeList.reduce(
+                (
+                    highest,
+                    employee
+                ) =>
+                    Number(employee.salary) >
+                    Number(highest.salary)
+                        ? employee
+                        : highest
+            )
+            : null;
+
+
+    return {
+
+        totalSalary:
+            totalSalary,
+
+        averageSalary:
+            averageSalary,
+
+        highestEmployee:
+            highestEmployee
+    };
+}
+
+
+// =========================================
+// UPDATE DASHBOARD
+// =========================================
+
+function updateDashboard(employeeList) {
+
+    const salaryData =
+        calculateSalary(
+            employeeList
+        );
+
+
+    // EMPLOYEE COUNT
+
+    document
+        .getElementById("employeeCount")
+        .textContent =
+            employeeList.length;
+
+
+    // TOTAL SALARY
+
+    document
+        .getElementById("totalSalary")
+        .textContent =
+            "₹" +
+            salaryData.totalSalary
+                .toLocaleString("en-IN");
+
+
+    // AVERAGE SALARY
+
+    document
+        .getElementById("averageSalary")
+        .textContent =
+            "₹" +
+            Math.round(
+                salaryData.averageSalary
+            ).toLocaleString("en-IN");
+
+
+    // HIGHEST SALARY
+
+    document
+        .getElementById("highestSalary")
+        .textContent =
+            salaryData.highestEmployee
+                ? "₹" +
+                  Number(
+                      salaryData
+                          .highestEmployee
+                          .salary
+                  ).toLocaleString("en-IN")
+                : "₹0";
+
+
+    // HIGHEST PAID EMPLOYEE
+
+    const highest =
+        document
+            .getElementById(
+                "highestEmployee"
+            );
+
+
+    if (salaryData.highestEmployee) {
+
+        highest.innerHTML = `
+
+            <strong>Name:</strong>
+            ${salaryData.highestEmployee.name}
+
+            <br>
+
+            <strong>Department:</strong>
+            ${salaryData.highestEmployee.department}
+
+            <br>
+
+            <strong>Salary:</strong>
+            ₹${Number(
+                salaryData.highestEmployee.salary
+            ).toLocaleString("en-IN")}
+
+        `;
+    }
+
+    else {
+
+        highest.textContent =
+            "No employee data available";
+    }
+}
+
+
+// =========================================
+// SORT EMPLOYEES
+// =========================================
+
+function sortEmployees(type) {
+
+    let sorted =
+        [...displayedEmployees];
+
+
+    if (type === "name") {
+
+        sorted.sort(
+            (a, b) =>
+                a.name.localeCompare(
+                    b.name
+                )
+        );
+    }
+
+
+    else if (type === "age") {
+
+        sorted.sort(
+            (a, b) =>
+                a.age - b.age
+        );
+    }
+
+
+    else if (type === "salary") {
+
+        sorted.sort(
+            (a, b) =>
+                Number(b.salary) -
+                Number(a.salary)
+        );
+    }
+
+
+    displayEmployees(
+        sorted
+    );
+}
+
+
+// =========================================
+// CLEAR FORM
+// =========================================
+
+function clearForm() {
+
+    document
+        .getElementById("employeeForm")
+        .reset();
+}
+
+
+// =========================================
+// MESSAGE
+// =========================================
+
+function showMessage(text) {
+
+    const message =
+        document.getElementById(
+            "message"
+        );
+
+    message.textContent =
+        text;
+
+    message.style.display =
+        "block";
+
+
+    setTimeout(
+        function() {
+
+            message.style.display =
+                "none";
+
+        },
+        3000
+    );
+}
+
+
+// =========================================
 // START APPLICATION
-// =====================================================
-
-updateDateTime();
-
-
-// Update clock every second
-
-setInterval(
-    updateDateTime,
-    1000
-);
-
-
-// Fetch employees from API
+// =========================================
 
 fetchEmployees();
