@@ -1,3 +1,4 @@
+
 // =====================================================
 // EMPLOYEE MANAGEMENT SYSTEM
 // =====================================================
@@ -632,8 +633,8 @@ function addEmployee(event) {
 
     const department =
         document.getElementById("department")
-
             .value;
+
 
     // Create employee object
 
